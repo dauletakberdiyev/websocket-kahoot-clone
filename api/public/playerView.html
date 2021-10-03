@@ -1,0 +1,47 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <form id="form">
+        <input type="text" id="pinCode" name="pinCode" placeholder="pin">
+        <input type="text" id="nickName" name="nickName" placeholder="nickName">
+        <input type="submit" value="Submit">
+    </form>
+    <div class="error"></div>
+<script>
+    const socket = io();
+
+    const form = document.querySelector('#form');
+    const pinCodeInput = document.querySelector('#pinCode');
+    const nickNameInput = document.querySelector('#nickName');
+    const errorBlock = document.querySelector('.error');
+    const startBtn = document.querySelector('#startBtn');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        const pinCode = pinCodeInput.value;
+        const nickName = nickNameInput.value;
+        
+        data = {
+            pinCode: pinCode,
+            nickName: nickName
+        };
+
+        socket.emit('player-join', (data));
+    })
+
+    socket.on('not-valid-pin', (msg) => {
+        errorBlock.innerHTML = msg;
+    })
+
+    socket.on('game-started', (game) => {
+        window.location.href = "./game.html?id=" + game.hostId;
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <title>Document</title>
+    <style type="text/css">
+        #nickNameForm{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <form id="pinCodeForm">
+        <input type="text" id="pinCode" name="pinCode">
+        <input type="submit" value="send">
+    </form>
+
+    <button id="startBtn">Start Game</button>
+
+    <div class="pinCode"></div>
+    <div class="error"></div>
+
+    <form id="nickNameForm">
+        <input type="text" id="nickName" name="nickName" placeholder="nickName">
+        <input type="submit" value="send">
+    </form>
+
+    <div class="joinedPlayers"></div>
+<script>
+    const socket = io();
+    let pinCodeNum = 0;
+    const pinCodeBlock = document.querySelector('.pinCode');
+    const errorBlock = document.querySelector('.error');
+    const form = document.querySelector('#pinCodeForm');
+    const pinCodeInput = document.querySelector('#pinCode');
+    const nickNameForm = document.querySelector('#nickNameForm');
+    const nickNameInput = document.querySelector('#nickName');
+    const joinedPlayers = document.querySelector('.joinedPlayers');
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    const startBtn = document.querySelector('#startBtn');
+
+    socket.on('connect', function() {
+        socket.emit('game-join', '46579');
+    });
+
+    socket.on('player-enter', (pinCode) => {
+        pinCodeNum = pinCode;
+        pinCodeBlock.innerHTML = pinCodeNum;
+        console.log(pinCodeBlock);
+    })
+
+    // socket.on('incorrect-pin-code', () => {
+    //     errorBlock.innerHTML = 'You enter incorrect pin code';
+    // })
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        const pinCode = pinCodeInput.value;
+        if(parseInt(pinCode) !== pinCodeNum){
+            errorBlock.innerHTML = 'You enter incorrect pin code';
+            return;
+        }
+        nickNameForm.style.display = 'flex';        
+    })
+
+    nickNameForm.addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        const nickName = nickNameInput.value;
+        socket.emit('player-join', nickName, pinCodeNum);
+    })
+
+    socket.on('joined-players', (players) => {
+        joinedPlayers.innerHTML = '';
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.setAttribute('class', 'delete-btn');
+        deleteBtn.innerHTML = 'delete';
+
+        for (let i = 0; i < players.length; i++) {
+            joinedPlayers.innerHTML += players[i].nickName;
+            deleteBtn.onclick = removePlayer;
+            deleteBtn.setAttribute('data-id', players[i].id);
+            joinedPlayers.appendChild(deleteBtn);
+        }
+    })
+
+    function removePlayer(e){
+        console.log(e.target.dataset.id);
+        socket.emit('remove-player', e.target.dataset.id);
+    }
+    
+    startBtn.addEventListener('click', function(e) {
+        socket.emit('start-game');
+        window.location.href = "./game.html";
+    })
+</script>
+</body>
+</html>
